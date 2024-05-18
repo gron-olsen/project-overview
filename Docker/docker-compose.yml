@@ -1,0 +1,21 @@
+version: '3.7'
+services:
+  user-service:
+    image: magnusheeschita/user-service:latest
+    ports:
+      - 5102:80
+    environment:
+      - connectionString=mongodb://mongodb:27017/
+      - userCol=userCol
+      - database=userDB
+    expose:
+      - "80"
+
+  auth-service:
+    image: magnusheeschita/auth-service:latest
+    ports:
+      - 5049:80
+    environment:
+      - Secret=VeryLongAndVerySecretSecretThatIsSuperSecretive
+      - Issuer=VeryLongAndVerySecretIssuerThatIsSuperGood
+      - apiGetUser=user-service:80/user/GetUser
