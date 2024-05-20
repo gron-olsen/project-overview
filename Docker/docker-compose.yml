@@ -1,13 +1,39 @@
 version: '3.7'
 services:
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - loki
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - loki
+
+  catalog-service:
+    image: magnusheeschita/catalog-service:latest
+    ports:
+      -5289:80
+    environment:
+      - connectionString=mongodb://mongodb:27017/
+      - database=catalogDB
+      - collection=catalogCol
+    expose:
+      - "80"
+
   user-service:
     image: magnusheeschita/user-service:latest
     ports:
       - 5102:80
     environment:
       - connectionString=mongodb://mongodb:27017/
-      - userCol=userCol
       - database=userDB
+      - collection=userCol
     expose:
       - "80"
 
