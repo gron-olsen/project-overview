@@ -1,5 +1,81 @@
 version: '3.7'
 services:
+  rabbitmq-service:
+    image: rabbitmq:3.11-management
+    ports:
+      - 5672:5672
+    expose:
+      - "80"
+
+  redis-service:
+    image: redis/redis-stack-server:latest
+    ports:
+      - 6379:6379
+    expose:
+      - "80"
+
+  auction-service:
+    image: magnusheeschita/auction-service:latest
+    ports:
+      - 5230:80
+    environment:
+      - redisConnection=redis-18021.c251.east-us-mz.azure.redns.redis-cloud.com:18021,password=1234
+      - rabbitmqUrl=rabbitmq-service
+      - rabbitmqPort=5672
+      - Valid=http://auth-service:80
+    expose:
+      - "80"
+
+  mongodb:
+    image: mongo:latest
+    restart: always
+    ports:
+      - 27017:27017
+    expose:
+      - "80"
+
+  user-service:
+    image: magnusheeschita/user-service:latest
+    ports:
+      - 5102:80
+    environment:
+      - connectionString=mongodb://mongodb:27017/
+      - userCol=userCol
+      - database=userDB
+    expose:
+      - "80"
+
+  authentication-service:
+    image: magnusheeschita/auth-service:latest
+    ports:
+      - 5049:80
+    environment:
+      - Secret=VeryLongAndVerySecretSecretThatIsSuperSecretive
+      - Issuer=VeryLongAndVerySecretIssuerThatIsSuperGood
+      - apiGetUser=user-service:80/user/GetUser
+      - Valid=http://authentication-service:80
+    expose:
+      - "80"
+
+  catalog-service:
+    image: magnusheeschita/catalog-service:latest
+    ports:
+      - 5289:80
+    environment:
+      - connectionString=mongodb://mongodb:27017/
+      - collection=catalogCol
+      - AuctionConnection=http://auction-service:80
+      - database=catalogDB
+
+  bid-service:
+    image: magnusheescita/bid-service:latest
+    environment:
+      - mongodb=mongodb://mongodb:27017/
+      - database=auctionDB
+      - BidCollection=auctionBidCol
+      - rabbitmqUrl=rabbitmq-service
+      - rabbitmqPort=5672
+
   loki:
     image: grafana/loki:latest
     ports:
@@ -14,34 +90,3 @@ services:
       - "3000:3000"
     networks:
       - loki
-
-  catalog-service:
-    image: magnusheeschita/catalog-service:latest
-    ports:
-      -5289:80
-    environment:
-      - connectionString=mongodb://mongodb:27017/
-      - database=catalogDB
-      - collection=catalogCol
-    expose:
-      - "80"
-
-  user-service:
-    image: magnusheeschita/user-service:latest
-    ports:
-      - 5102:80
-    environment:
-      - connectionString=mongodb://mongodb:27017/
-      - database=userDB
-      - collection=userCol
-    expose:
-      - "80"
-
-  auth-service:
-    image: magnusheeschita/auth-service:latest
-    ports:
-      - 5049:80
-    environment:
-      - Secret=VeryLongAndVerySecretSecretThatIsSuperSecretive
-      - Issuer=VeryLongAndVerySecretIssuerThatIsSuperGood
-      - apiGetUser=user-service:80/user/GetUser
