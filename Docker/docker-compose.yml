@@ -19,7 +19,7 @@ services:
     ports:
       - 5672:5672
     expose:
-      - "80"
+      - "8080"
     networks:
       - default
 
@@ -28,83 +28,86 @@ services:
     ports:
       - 6379:6379
     expose:
-      - "80"
+      - "8080"
     networks:
       - default
 
   auction-service:
-    image: magnusheeschita/auction-service:latest
+    image: marke01/auction-service:latest
     ports:
-      - 5230:80
+      - 5230:8080
     environment:
-      - redisConnection=redis-18021.c251.east-us-mz.azure.redns.redis-cloud.com:18021,password=1234
+      - redisConnection=redis-16065.c56.east-us.azure.redns.redis-cloud.com:16065,password=1234
       - rabbitmqUrl=rabbitmq-service
       - rabbitmqPort=5672
-      - Valid=http://auth-service:80
+      - Valid=http://auth-service:8080
     expose:
-      - "80"
+      - "8080"
     networks:
-      - default
+      - loki
 
   mongodb:
     image: mongo:latest
     restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=1234
     ports:
-      - 27017:27017
+      - 27018:27017
     expose:
-      - "80"
+      - "8080"
     networks:
-      - default
+      - loki
 
   user-service:
-    image: magnusheeschita/user-service:latest
+    image: marke01/user-service:latest
     ports:
-      - 5102:80
+      - 5102:8080
     environment:
       - connectionString=mongodb://mongodb:27017/
       - userCol=userCol
       - database=userDB
     expose:
-      - "80"
+      - "8080"
     networks:
-      - default
+      - loki
 
   auth-service:
-    image: magnusheeschita/auth-service:latest
+    image: marke01/auth-service:latest
     ports:
-      - 5049:80
+      - 5049:8080
     environment:
-      - Secret=VeryLongAndVerySecretSecretThatIsSuperSecretive
-      - Issuer=VeryLongAndVerySecretIssuerThatIsSuperGood
+      - Secret=RasmusGrønErSuperCoolOgDenBedsteChef!
+      - Issuer=Gron&OlsenGruppen
       - apiGetUser=user-service:80/user/GetUser
-      - Valid=http://auth-service:80
+      - Valid=http://auth-service:8080
     expose:
-      - "80"
+      - "8080"
     networks:
-      - default
+      - loki
 
   catalog-service:
-    image: magnusheeschita/catalog-service:latest
+    image: marke01/catalog-service:latest
     ports:
-      - 5289:80
+      - 5289:8080
     environment:
       - connectionString=mongodb://mongodb:27017/
       - collection=catalogCol
-      - AuctionConnection=http://auction-service:80
+      - AuctionConnection=http://auction-service:8080
       - database=catalogDB
     networks:
-      - default
+      - loki
 
   bid-service:
-    image: magnusheeschita/bid-service:latest
+    image: marke01/bid-service:latest
     environment:
       - mongodb=mongodb://mongodb:27017/
       - database=auctionDB
-      - BidCollection=auctionBidCol
+      - collection=auctionBidCol
       - rabbitmqUrl=rabbitmq-service
       - rabbitmqPort=5672
     networks:
-      - default
+      - loki
 
 networks:
   loki:
